@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0A2540;
+  --color-accent: #00A8E8;
+  --color-bg: #FFFFFF;
+  --color-card: #F8F9FA;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #555555;
+  --color-success: #28A745;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #1A1A1A;
+}
+
+.dark {
+  --background: #0A2540;
+  --foreground: #FFFFFF;
+  --color-card: #1a2d47;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .animate-in {
+    animation-duration: 500ms;
+    animation-fill-mode: both;
+  }
+  .fade-in {
+    animation-name: fadeIn;
+  }
+  .slide-in-from-bottom-4 {
+    animation-name: slideInFromBottom;
+  }
+  .slide-in-from-top-4 {
+    animation-name: slideInFromTop;
+  }
+  .slide-in-from-left {
+    animation-name: slideInFromLeft;
+  }
+  .zoom-in {
+    animation-name: zoomIn;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(1rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+  from { transform: translateY(-1rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-1rem); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
