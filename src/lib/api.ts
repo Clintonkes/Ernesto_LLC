@@ -100,10 +100,13 @@ export const api = {
   // Products
   products: {
     list: (params?: { brand?: string; category?: string; skip?: number; limit?: number }) => {
-      const queryParams = { ...params } as any;
-      if (queryParams.skip === undefined) queryParams.skip = 0;
-      if (queryParams.limit === undefined) queryParams.limit = 10;
-      
+      const queryParams: Record<string, string> = {
+        skip: String(params?.skip ?? 0),
+        limit: String(params?.limit ?? 10),
+      };
+      if (params?.brand) queryParams.brand = params.brand;
+      if (params?.category) queryParams.category = params.category;
+
       const qs = new URLSearchParams(queryParams).toString();
       return request<PaginatedResponse<ApiProduct>>(`/products?${qs}`);
     },
