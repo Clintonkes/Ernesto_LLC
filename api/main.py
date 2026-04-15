@@ -90,7 +90,9 @@ SEED_PRODUCTS = [
 
 @app.on_event("startup")
 def on_startup():
-    logger.info("Starting RA Ernesto API — running startup checks...")
+    db_url = database.SQLALCHEMY_DATABASE_URL
+    db_type = "SQLite (EPHEMERAL — set DATABASE_URL in Railway vars!)" if "sqlite" in db_url else f"PostgreSQL ({db_url.split('@')[-1]})"
+    logger.info(f"Starting RA Ernesto API — DB: {db_type}")
 
     # Create all tables
     models.Base.metadata.create_all(bind=database.engine)
@@ -103,27 +105,49 @@ def on_startup():
         if not crud.get_admin_by_email(db, admin_email):
             crud.create_admin(db, schemas.AdminCreate(email=admin_email, password="Admin123"))
             logger.info("Default admin user created.")
-
-        # Seed products
-        if crud.count_products(db) == 0:
-            logger.info("Seeding product inventory...")
-            for p in SEED_PRODUCTS:
-                db_product = models.Product(**p)
-                db.add(db_product)
-            db.commit()
-            logger.info(f"Seeded {len(SEED_PRODUCTS)} products into the database.")
         else:
-            logger.info(f"Products already exist ({crud.count_products(db)} records) — skipping seed.")
+            logger.info("Admin user already exists.")
+
+        # Seed products — run in its own transaction so admin-seed failure can't roll it back
+        product_count = crud.count_products(db)
+        if product_count == 0:
+            logger.info("No products found — seeding inventory...")
+            try:
+                for p in SEED_PRODUCTS:
+                    db_product = models.Product(**p)
+                    db.add(db_product)
+                db.commit()
+                logger.info(f"Seeded {len(SEED_PRODUCTS)} products successfully.")
+            except Exception as seed_err:
+                db.rollback()
+                logger.error(f"Product seed failed: {seed_err}", exc_info=True)
+        else:
+            logger.info(f"Database has {product_count} products — skipping seed.")
     except Exception as e:
         db.rollback()
-        logger.error(f"Startup error: {e}")
+        logger.error(f"Startup error: {e}", exc_info=True)
     finally:
         db.close()
 
 
 @app.get("/health")
 def health_check():
-    return {"message": "RA Ernesto API is running", "version": "1.0.0"}
+    db_url = database.SQLALCHEMY_DATABASE_URL
+    db_type = "sqlite" if "sqlite" in db_url else "postgresql"
+    db = database.SessionLocal()
+    try:
+        product_count = crud.count_products(db)
+    except Exception:
+        product_count = -1
+    finally:
+        db.close()
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "db_type": db_type,
+        "product_count": product_count,
+        "warning": "Using SQLite — data resets on redeploy! Set DATABASE_URL in Railway." if db_type == "sqlite" else None,
+    }
 
 
 # ── SPA Fallback (serve React frontend for all non-API routes) ────────────────
