@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exception_handlers import http_exception_handler as _default_http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import models, database, crud, schemas
 from .routers import orders, auth, products, enquiries
 from .middleware.logging import ActivityLoggerMiddleware
@@ -124,23 +127,32 @@ def health_check():
 
 
 # ── SPA Fallback (serve React frontend for all non-API routes) ────────────────
+# Uses a custom exception handler instead of a catch-all route.
+# A catch-all route competes with FastAPI's own routing; an exception handler
+# only fires AFTER routing has already failed (no route matched), so it never
+# blocks the API routers.
 
 DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
 
 if os.path.exists(DIST_DIR):
-    from fastapi.responses import FileResponse as _FileResponse
-
     assets_dir = os.path.join(DIST_DIR, "assets")
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
 
-    @app.get("/{full_path:path}")
-    def serve_frontend(full_path: str):
-        # Never intercept API or upload paths — they must reach their own routers
-        if full_path.startswith(("api/", "uploads/")):
-            from fastapi import HTTPException as _HTTPException
-            raise _HTTPException(status_code=404, detail="Not found")
-        candidate = os.path.join(DIST_DIR, full_path)
-        if os.path.isfile(candidate):
-            return _FileResponse(candidate)
-        return _FileResponse(os.path.join(DIST_DIR, "index.html"))
+
+@app.exception_handler(StarletteHTTPException)
+async def spa_fallback(request: Request, exc: StarletteHTTPException):
+    """
+    For 404s on non-API paths: serve index.html so React Router handles them.
+    For everything else (API 404s, 4xx, 5xx): use FastAPI's default JSON response.
+    """
+    if (
+        exc.status_code == 404
+        and not request.url.path.startswith("/api/")
+        and not request.url.path.startswith("/uploads/")
+        and os.path.exists(DIST_DIR)
+    ):
+        index_path = os.path.join(DIST_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+    return await _default_http_exception_handler(request, exc)
