@@ -1,10 +1,8 @@
+import base64
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import Optional
-import shutil
-import os
-import uuid
 from .. import crud, database, schemas
 
 logger = logging.getLogger(__name__)
@@ -57,19 +55,14 @@ async def create_product(
     db: Session = Depends(database.get_db)
 ):
     try:
-        # Save file
-        upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static/uploads")
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        file_extension = os.path.splitext(image.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(upload_dir, unique_filename)
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-            
-        image_url = f"/uploads/{unique_filename}"
-        
+        image_bytes = await image.read()
+        if not image_bytes:
+            raise HTTPException(status_code=400, detail="Product image is required")
+
+        content_type = image.content_type or "application/octet-stream"
+        encoded_image = base64.b64encode(image_bytes).decode("ascii")
+        image_url = f"data:{content_type};base64,{encoded_image}"
+
         product_data = schemas.ProductCreate(
             name=name,
             oem_number=oem_number,

@@ -5,7 +5,7 @@ import {
   LogOut, Plus, Search, Loader2, AlertCircle,
   CheckCircle2, Clock, XCircle, RefreshCw, Trash2, X, AlertTriangle,
 } from 'lucide-react';
-import { api, ApiOrder, ApiEnquiry, ApiProduct, PaginatedResponse } from '../lib/api';
+import { api, ApiOrder, ApiEnquiry, ApiProduct, PaginatedResponse, resolveProductImageUrl } from '../lib/api';
 import { toast } from 'sonner';
 import Pagination from '../components/ui/Pagination';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
                                   <img
-                                    src={p.image_url ?? `https://placehold.co/60x60/0A2540/FFFFFF?text=${encodeURIComponent(p.name.slice(0, 2))}`}
+                                    src={resolveProductImageUrl(p.image_url, p.name)}
                                     alt={p.name}
                                     className="h-10 w-10 rounded-lg object-cover border bg-gray-50 flex-shrink-0"
                                   />

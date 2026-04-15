@@ -49,12 +49,30 @@ export interface ApiEnquiry {
   created_at: string;
 }
 
+export function resolveProductImageUrl(imageUrl: string | undefined, fallbackName: string) {
+  if (!imageUrl) {
+    return `https://placehold.co/800x600/0A2540/FFFFFF?text=${encodeURIComponent(fallbackName)}`;
+  }
+
+  if (
+    imageUrl.startsWith('http://') ||
+    imageUrl.startsWith('https://') ||
+    imageUrl.startsWith('data:') ||
+    imageUrl.startsWith('blob:')
+  ) {
+    return imageUrl;
+  }
+
+  if (imageUrl.startsWith('/')) {
+    return `${window.location.origin}${imageUrl}`;
+  }
+
+  return imageUrl;
+}
+
 // Convert a DB product to the shape the UI components expect
 export function toUiProduct(p: ApiProduct) {
-  // If image_url starts with /, prefix with absolute URL if needed, but Vite proxy handles /uploads
-  const imageUrl = p.image_url 
-    ? (p.image_url.startsWith('http') ? p.image_url : p.image_url) 
-    : `https://placehold.co/800x600/0A2540/FFFFFF?text=${encodeURIComponent(p.name)}`;
+  const imageUrl = resolveProductImageUrl(p.image_url, p.name);
 
   return {
     id: String(p.id),
