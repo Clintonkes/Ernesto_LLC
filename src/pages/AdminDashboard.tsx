@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3, Package, ShoppingCart, MessageSquare,
@@ -439,6 +439,14 @@ export default function AdminDashboard() {
     enquiries: 'Customer Service',
   };
 
+  type NavItem = { id: string; icon: React.ComponentType<{ className?: string }>; label: string; badge?: number };
+  const navItems: NavItem[] = [
+    { id: 'overview', icon: BarChart3, label: 'Overview' },
+    { id: 'orders', icon: ShoppingCart, label: 'Orders', badge: pendingOrders },
+    { id: 'inventory', icon: Package, label: 'Inventory' },
+    { id: 'enquiries', icon: MessageSquare, label: 'Customer Service', badge: openEnquiries },
+  ];
+
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex font-sans">
       {/* Sidebar */}
@@ -451,12 +459,7 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
-          (([
-            { id: 'overview', icon: BarChart3, label: 'Overview', badge: undefined as number | undefined },
-            { id: 'orders', icon: ShoppingCart, label: 'Orders', badge: pendingOrders as number | undefined },
-            { id: 'inventory', icon: Package, label: 'Inventory', badge: undefined as number | undefined },
-            { id: 'enquiries', icon: MessageSquare, label: 'Customer Service', badge: openEnquiries as number | undefined },
-          ])).map(({ id, icon: Icon, label, badge }) => (
+          {navItems.map(({ id, icon: Icon, label, badge }) => (
             <button
               key={id}
               onClick={() => { setActiveTab(id as Tab); setSearch(''); setBrandFilter(''); }}
