@@ -13,7 +13,7 @@ import resend
 
 logger = logging.getLogger(__name__)
 
-FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "RA Ernesto LLC <onboarding@resend.dev>")
+FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "RA Ernesto LLC <noreply@raernesto.com>")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "raernesto1110@gmail.com")
 
 
