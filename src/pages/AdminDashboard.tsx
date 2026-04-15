@@ -601,13 +601,14 @@ export default function AdminDashboard() {
 
           {/* ── ORDERS ── */}
           {activeTab === 'orders' && (
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="font-bold text-[#0A2540]">All Orders ({ordersTotal})</h2>
-                  <button onClick={() => loadOrders()} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8] transition-colors">
-                    <RefreshCw className="h-4 w-4" /> Refresh
-                  </button>
-                </div>
-                {loadingOrders ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-bold text-[#0A2540]">All Orders ({ordersTotal})</h2>
+                <button onClick={() => loadOrders()} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8] transition-colors">
+                  <RefreshCw className="h-4 w-4" /> Refresh
+                </button>
+              </div>
+              {loadingOrders ? (
                   <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#00A8E8]" /></div>
                 ) : (
                   <>
@@ -653,6 +654,7 @@ export default function AdminDashboard() {
                     </div>
                   </>
                 )}
+            </div>
           )}
 
           {/* ── INVENTORY ── */}
