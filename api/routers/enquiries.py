@@ -13,6 +13,7 @@ router = APIRouter(
 )
 
 
+@router.post("", response_model=schemas.Enquiry, status_code=201, include_in_schema=False)
 @router.post("/", response_model=schemas.Enquiry, status_code=201)
 def create_enquiry(enquiry: schemas.EnquiryCreate, db: Session = Depends(database.get_db)):
     try:
@@ -25,6 +26,7 @@ def create_enquiry(enquiry: schemas.EnquiryCreate, db: Session = Depends(databas
         raise HTTPException(status_code=500, detail="Failed to submit enquiry")
 
 
+@router.get("", include_in_schema=False)
 @router.get("/")
 def list_enquiries(skip: int = 0, limit: int = 10, db: Session = Depends(database.get_db)):
     items, total = crud.get_enquiries(db, skip=skip, limit=limit)

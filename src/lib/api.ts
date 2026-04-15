@@ -105,11 +105,11 @@ export const api = {
       if (queryParams.limit === undefined) queryParams.limit = 10;
       
       const qs = new URLSearchParams(queryParams).toString();
-      return request<PaginatedResponse<ApiProduct>>(`/products/?${qs}`);
+      return request<PaginatedResponse<ApiProduct>>(`/products?${qs}`);
     },
     get: (id: number | string) => request<ApiProduct>(`/products/${id}`),
     create: (formData: FormData) =>
-      request<ApiProduct>('/products/', { method: 'POST', body: formData }),
+      request<ApiProduct>('/products', { method: 'POST', body: formData }),
     update: (id: number, data: Partial<ApiProduct>) =>
       request<ApiProduct>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: number) => request<void>(`/products/${id}`, { method: 'DELETE' }),
@@ -118,8 +118,8 @@ export const api = {
   // Orders
   orders: {
     create: (data: object) =>
-      request<ApiOrder>('/orders/', { method: 'POST', body: JSON.stringify(data) }),
-    list: (skip = 0, limit = 10) => request<PaginatedResponse<ApiOrder>>(`/orders/?skip=${skip}&limit=${limit}`),
+      request<ApiOrder>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+    list: (skip = 0, limit = 10) => request<PaginatedResponse<ApiOrder>>(`/orders?skip=${skip}&limit=${limit}`),
     get: (id: number) => request<ApiOrder>(`/orders/${id}`),
     updateStatus: (id: number, status: string) =>
       request<ApiOrder>(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
@@ -128,8 +128,8 @@ export const api = {
   // Enquiries
   enquiries: {
     create: (data: object) =>
-      request<ApiEnquiry>('/enquiries/', { method: 'POST', body: JSON.stringify(data) }),
-    list: (skip = 0, limit = 10) => request<PaginatedResponse<ApiEnquiry>>(`/enquiries/?skip=${skip}&limit=${limit}`),
+      request<ApiEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(data) }),
+    list: (skip = 0, limit = 10) => request<PaginatedResponse<ApiEnquiry>>(`/enquiries?skip=${skip}&limit=${limit}`),
     updateStatus: (id: number, status: string) =>
       request<ApiEnquiry>(`/enquiries/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   },

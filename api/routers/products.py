@@ -15,6 +15,7 @@ router = APIRouter(
 )
 
 
+@router.get("", include_in_schema=False)
 @router.get("/")
 def list_products(
     brand: Optional[str] = None,
@@ -41,6 +42,7 @@ def get_product(product_id: int, db: Session = Depends(database.get_db)):
     return product
 
 
+@router.post("", response_model=schemas.Product, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 async def create_product(
     name: str = Form(...),

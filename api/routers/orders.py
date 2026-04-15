@@ -13,6 +13,7 @@ router = APIRouter(
 )
 
 
+@router.post("", response_model=schemas.Order, status_code=201, include_in_schema=False)
 @router.post("/", response_model=schemas.Order, status_code=201)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(database.get_db)):
     try:
@@ -25,6 +26,7 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(database.get_
         raise HTTPException(status_code=500, detail="Failed to place order")
 
 
+@router.get("", include_in_schema=False)
 @router.get("/")
 def list_orders(skip: int = 0, limit: int = 10, db: Session = Depends(database.get_db)):
     items, total = crud.get_orders(db, skip=skip, limit=limit)
