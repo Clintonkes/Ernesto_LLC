@@ -12,15 +12,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "incremental": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.mts"
-  ],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

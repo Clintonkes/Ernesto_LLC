@@ -285,6 +285,11 @@ export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState<ApiEnquiry[]>([]);
   const [apiError, setApiError] = useState('');
 
+  // Loading states
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingEnquiries, setLoadingEnquiries] = useState(false);
+
   // Pagination states
   const [ordersTotal, setOrdersTotal] = useState(0);
   const [ordersPage, setOrdersPage] = useState(1);
