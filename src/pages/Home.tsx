@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Truck, Clock, ShoppingCart, Loader2 } from 'lucide-react';
 import { api, toUiProduct } from '../lib/api';
-import { brands } from '../lib/mockData';
+const brands = ['Toyota', 'BMW', 'Ford', 'Mercedes-Benz', 'Honda', 'Chevrolet', 'Nissan', 'Volkswagen', 'Hyundai', 'Kia', 'Audi', 'Subaru'];
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<ReturnType<typeof toUiProduct>[]>([]);

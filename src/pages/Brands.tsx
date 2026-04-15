@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { brands } from '../lib/mockData';
+
+const brands = ['Toyota', 'BMW', 'Ford', 'Mercedes-Benz', 'Honda', 'Chevrolet', 'Nissan', 'Volkswagen', 'Hyundai', 'Kia', 'Audi', 'Subaru'];
 
 export default function Brands() {
   return (

@@ -3,8 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Filter, Search, ChevronRight, LayoutGrid, List as ListIcon, Loader2, ShoppingCart } from 'lucide-react';
 import { api, toUiProduct, ApiProduct } from '../lib/api';
 import Pagination from '../components/ui/Pagination';
-import { categories } from '../lib/data/brands';
-import { brands } from '../lib/mockData';
+const brands = ['Toyota', 'BMW', 'Ford', 'Mercedes-Benz', 'Honda', 'Chevrolet', 'Nissan', 'Volkswagen', 'Hyundai', 'Kia', 'Audi', 'Subaru'];
+const categories = ['Engine Parts', 'Brakes', 'Suspension', 'Electrical', 'Transmission', 'Filters', 'Exhaust', 'Cooling', 'Steering', 'Body Parts'];
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
