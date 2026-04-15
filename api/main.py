@@ -150,6 +150,36 @@ def health_check():
     }
 
 
+@app.post("/api/v1/admin/reseed")
+def reseed_database():
+    """Force-insert all seed products. Safe to call on an already-seeded DB — skips duplicates by OEM number."""
+    db = database.SessionLocal()
+    inserted = 0
+    skipped = 0
+    errors = []
+    try:
+        for p in SEED_PRODUCTS:
+            existing = db.query(models.Product).filter(models.Product.oem_number == p["oem_number"]).first()
+            if existing:
+                skipped += 1
+                continue
+            try:
+                db.add(models.Product(**p))
+                db.commit()
+                inserted += 1
+            except Exception as e:
+                db.rollback()
+                errors.append(f"{p['oem_number']}: {str(e)}")
+    finally:
+        db.close()
+    return {
+        "inserted": inserted,
+        "skipped": skipped,
+        "errors": errors,
+        "total_seed_products": len(SEED_PRODUCTS),
+    }
+
+
 # ── SPA Fallback (serve React frontend for all non-API routes) ────────────────
 # Uses a custom exception handler instead of a catch-all route.
 # A catch-all route competes with FastAPI's own routing; an exception handler
