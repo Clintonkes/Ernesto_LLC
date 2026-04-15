@@ -136,6 +136,10 @@ if os.path.exists(DIST_DIR):
 
     @app.get("/{full_path:path}")
     def serve_frontend(full_path: str):
+        # Never intercept API or upload paths — they must reach their own routers
+        if full_path.startswith(("api/", "uploads/")):
+            from fastapi import HTTPException as _HTTPException
+            raise _HTTPException(status_code=404, detail="Not found")
         candidate = os.path.join(DIST_DIR, full_path)
         if os.path.isfile(candidate):
             return _FileResponse(candidate)

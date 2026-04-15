@@ -104,8 +104,8 @@ export const api = {
       if (queryParams.skip === undefined) queryParams.skip = 0;
       if (queryParams.limit === undefined) queryParams.limit = 10;
       
-      const qs = '?' + new URLSearchParams(queryParams).toString();
-      return request<PaginatedResponse<ApiProduct>>(`/products${qs}`);
+      const qs = new URLSearchParams(queryParams).toString();
+      return request<PaginatedResponse<ApiProduct>>(`/products/?${qs}`);
     },
     get: (id: number | string) => request<ApiProduct>(`/products/${id}`),
     create: (formData: FormData) =>
