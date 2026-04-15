@@ -11,6 +11,7 @@ import Cart from './pages/Cart';
 import CustomerService from './pages/CustomerService';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import { Toaster } from 'sonner';
 
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -48,6 +49,7 @@ export default function App() {
         {/* Catch-all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster position="top-right" richColors />
     </Router>
   );
 }

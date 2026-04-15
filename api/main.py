@@ -1,12 +1,14 @@
 import logging
+import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from . import models, database, crud, schemas
+from .routers import orders, auth, products, enquiries
 from .middleware.logging import ActivityLoggerMiddleware
 from .sse_manager import manager
 from sse_starlette.sse import EventSourceResponse
-import os
 
 load_dotenv()
 
@@ -116,6 +118,25 @@ def on_startup():
         db.close()
 
 
-@app.get("/")
-def read_root():
+@app.get("/health")
+def health_check():
     return {"message": "RA Ernesto API is running", "version": "1.0.0"}
+
+
+# ── SPA Fallback (serve React frontend for all non-API routes) ────────────────
+
+DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
+
+if os.path.exists(DIST_DIR):
+    from fastapi.responses import FileResponse as _FileResponse
+
+    assets_dir = os.path.join(DIST_DIR, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
+
+    @app.get("/{full_path:path}")
+    def serve_frontend(full_path: str):
+        candidate = os.path.join(DIST_DIR, full_path)
+        if os.path.isfile(candidate):
+            return _FileResponse(candidate)
+        return _FileResponse(os.path.join(DIST_DIR, "index.html"))

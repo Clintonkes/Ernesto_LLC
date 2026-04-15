@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   BarChart3, Package, ShoppingCart, MessageSquare,
   LogOut, Plus, Search, Loader2, AlertCircle,
-  CheckCircle2, Clock, XCircle, RefreshCw, Trash2, X,
+  CheckCircle2, Clock, XCircle, RefreshCw, Trash2, X, AlertTriangle,
 } from 'lucide-react';
-import { api, ApiOrder, ApiEnquiry, ApiProduct } from '../lib/api';
+import { api, ApiOrder, ApiEnquiry, ApiProduct, PaginatedResponse } from '../lib/api';
+import { toast } from 'sonner';
+import Pagination from '../components/ui/Pagination';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'overview' | 'orders' | 'inventory' | 'enquiries';
@@ -68,29 +71,51 @@ function LogoutModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
 function AddProductModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [form, setForm] = useState({
     name: '', oem_number: '', brand: '', category: '', price: '', stock: '',
-    image_url: '', description: '', compatible_vehicles: '',
+    description: '', compatible_vehicles: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const BRANDS = ['Toyota', 'BMW', 'Ford', 'Mercedes-Benz', 'Honda', 'Chevrolet', 'Nissan', 'Volkswagen', 'Hyundai', 'Kia', 'Audi', 'Subaru'];
   const CATEGORIES = ['Engine Parts', 'Brakes', 'Suspension', 'Electrical', 'Transmission', 'Filters', 'Exhaust', 'Cooling', 'Steering', 'Body Parts'];
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!imageFile) {
+      setError('Please select an image file.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     try {
-      await api.products.create({
-        ...form,
-        price: parseFloat(form.price),
-        stock: parseInt(form.stock, 10),
-        image_url: form.image_url || null,
-        description: form.description || null,
-        compatible_vehicles: form.compatible_vehicles || null,
-        created_at: new Date().toISOString(),
-        id: 0,
-      } as any);
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('oem_number', form.oem_number);
+      formData.append('brand', form.brand);
+      formData.append('category', form.category);
+      formData.append('price', form.price);
+      formData.append('stock', form.stock);
+      formData.append('description', form.description);
+      formData.append('compatible_vehicles', form.compatible_vehicles);
+      formData.append('image', imageFile);
+
+      await api.products.create(formData);
+      toast.success('Product added successfully!');
       onAdded();
       onClose();
     } catch (err: any) {
@@ -144,11 +169,35 @@ function AddProductModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Image URL</label>
-            <input type="url" value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#00A8E8]/20 focus:border-[#00A8E8] outline-none" />
-            {form.image_url && (
-              <img src={form.image_url} alt="preview" className="mt-2 h-24 w-24 object-cover rounded-lg border" onError={e => (e.currentTarget.style.display = 'none')} />
-            )}
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Product Image *</label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-[#00A8E8] transition-colors">
+              <div className="space-y-1 text-center">
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <img src={imagePreview} alt="Preview" className="h-32 w-32 object-cover rounded-lg" />
+                    <button 
+                      type="button" 
+                      onClick={() => { setImageFile(null); setImagePreview(''); }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Package className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-[#00A8E8] hover:text-[#0092c9] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                        <span>Upload a file</span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
@@ -234,47 +283,132 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [enquiries, setEnquiries] = useState<ApiEnquiry[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [loadingEnquiries, setLoadingEnquiries] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  // Pagination states
+  const [ordersTotal, setOrdersTotal] = useState(0);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [productsTotal, setProductsTotal] = useState(0);
+  const [productsPage, setProductsPage] = useState(1);
+  const [enquiriesTotal, setEnquiriesTotal] = useState(0);
+  const [enquiriesPage, setEnquiriesPage] = useState(1);
+
+  // Confirm Modal state
+  const [confirmData, setConfirmData] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const BRANDS = ['Toyota', 'BMW', 'Ford', 'Mercedes-Benz', 'Honda', 'Chevrolet', 'Nissan', 'Volkswagen', 'Hyundai', 'Kia', 'Audi', 'Subaru'];
 
   const loadOrders = useCallback(async () => {
     setLoadingOrders(true);
-    try { setOrders(await api.orders.list()); setApiError(''); }
-    catch (e: any) { setApiError(e.message); }
+    try {
+      const res = await api.orders.list((ordersPage - 1) * 10, 10);
+      setOrders(res.items);
+      setOrdersTotal(res.total);
+      setApiError('');
+    } catch (e: any) { setApiError(e.message); }
     finally { setLoadingOrders(false); }
-  }, []);
+  }, [ordersPage]);
 
   const loadProducts = useCallback(async () => {
     setLoadingProducts(true);
-    try { setProducts(await api.products.list()); setApiError(''); }
-    catch (e: any) { setApiError(e.message); }
+    try {
+      const res = await api.products.list({
+        brand: brandFilter || undefined,
+        skip: (productsPage - 1) * 10,
+        limit: 10
+      });
+      setProducts(res.items);
+      setProductsTotal(res.total);
+      setApiError('');
+    } catch (e: any) { setApiError(e.message); }
     finally { setLoadingProducts(false); }
-  }, []);
+  }, [brandFilter, productsPage]);
 
   const loadEnquiries = useCallback(async () => {
     setLoadingEnquiries(true);
-    try { setEnquiries(await api.enquiries.list()); setApiError(''); }
-    catch (e: any) { setApiError(e.message); }
+    try {
+      const res = await api.enquiries.list((enquiriesPage - 1) * 10, 10);
+      setEnquiries(res.items);
+      setEnquiriesTotal(res.total);
+      setApiError('');
+    } catch (e: any) { setApiError(e.message); }
     finally { setLoadingEnquiries(false); }
-  }, []);
+  }, [enquiriesPage]);
 
-  useEffect(() => { loadOrders(); loadProducts(); loadEnquiries(); }, []);
+  useEffect(() => { loadOrders(); loadProducts(); loadEnquiries(); }, [ordersPage, productsPage, enquiriesPage, brandFilter]);
+
+  // Real-time updates via SSE
+  useEffect(() => {
+    console.log('Connecting to SSE...');
+    const eventSource = new EventSource('/api/v1/events');
+    
+    eventSource.onmessage = (event) => {
+      console.log('SSE message received:', event.data);
+      if (event.data === 'NEW_ORDER') {
+        toast.info('New order received!', {
+          action: { label: 'Refresh', onClick: () => loadOrders() }
+        });
+        loadOrders();
+      } else if (event.data === 'NEW_ENQUIRY') {
+        toast.info('New customer enquiry received!', {
+          action: { label: 'Refresh', onClick: () => loadEnquiries() }
+        });
+        loadEnquiries();
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error('SSE connection failed:', err);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [loadOrders, loadEnquiries]);
 
   const handleMarkOrderComplete = async (id: number) => {
-    try {
-      await api.orders.updateStatus(id, 'completed');
-      loadOrders();
-    } catch (e: any) { alert(e.message); }
+    setConfirmData({
+      isOpen: true,
+      title: 'Complete Order?',
+      message: `Are you sure you want to mark order #${id} as completed? This will notify the customer.`,
+      onConfirm: async () => {
+        try {
+          await api.orders.updateStatus(id, 'completed');
+          toast.success(`Order #${id} completed!`);
+          loadOrders();
+        } catch (e: any) { toast.error(e.message); }
+        setConfirmData(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleDeleteProduct = async (id: number) => {
-    if (!confirm('Delete this product?')) return;
-    try { await api.products.delete(id); loadProducts(); }
-    catch (e: any) { alert(e.message); }
+    setConfirmData({
+      isOpen: true,
+      title: 'Delete Product?',
+      message: 'Are you sure you want to delete this product? This action cannot be undone.',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.products.delete(id);
+          toast.success('Product deleted successfully');
+          loadProducts();
+        } catch (e: any) { toast.error(e.message); }
+        setConfirmData(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const confirmLogout = () => { localStorage.removeItem('ra_admin_session'); navigate('/admin/login'); };
@@ -317,12 +451,12 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
-          {([
-            { id: 'overview', icon: BarChart3, label: 'Overview' },
-            { id: 'orders', icon: ShoppingCart, label: 'Orders', badge: pendingOrders },
-            { id: 'inventory', icon: Package, label: 'Inventory' },
-            { id: 'enquiries', icon: MessageSquare, label: 'Customer Service', badge: openEnquiries },
-          ] as const).map(({ id, icon: Icon, label, badge }) => (
+          (([
+            { id: 'overview', icon: BarChart3, label: 'Overview', badge: undefined as number | undefined },
+            { id: 'orders', icon: ShoppingCart, label: 'Orders', badge: pendingOrders as number | undefined },
+            { id: 'inventory', icon: Package, label: 'Inventory', badge: undefined as number | undefined },
+            { id: 'enquiries', icon: MessageSquare, label: 'Customer Service', badge: openEnquiries as number | undefined },
+          ])).map(({ id, icon: Icon, label, badge }) => (
             <button
               key={id}
               onClick={() => { setActiveTab(id as Tab); setSearch(''); setBrandFilter(''); }}
@@ -464,53 +598,58 @@ export default function AdminDashboard() {
 
           {/* ── ORDERS ── */}
           {activeTab === 'orders' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <h2 className="font-bold text-[#0A2540]">All Orders ({orders.length})</h2>
-                <button onClick={loadOrders} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8] transition-colors">
-                  <RefreshCw className="h-4 w-4" /> Refresh
-                </button>
-              </div>
-              {loadingOrders ? (
-                <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#00A8E8]" /></div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                      <th className="px-6 py-4">Order</th><th className="px-6 py-4">Customer</th>
-                      <th className="px-6 py-4">Items</th><th className="px-6 py-4">Total</th>
-                      <th className="px-6 py-4">Status</th><th className="px-6 py-4">Date</th><th className="px-6 py-4">Action</th>
-                    </tr></thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredOrders.map(o => (
-                        <tr key={o.id} className="hover:bg-gray-50/50">
-                          <td className="px-6 py-4 font-bold text-sm text-[#0A2540]">#{o.id}</td>
-                          <td className="px-6 py-4 text-sm"><p className="font-semibold">{o.customer_name}</p><p className="text-gray-400 text-xs">{o.customer_email}</p><p className="text-gray-400 text-xs">{o.shipping_address}</p></td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{o.items.length} item{o.items.length !== 1 ? 's' : ''}</td>
-                          <td className="px-6 py-4 font-bold text-sm">${o.total_amount.toFixed(2)}</td>
-                          <td className="px-6 py-4"><StatusBadge status={o.status} /></td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{fmt(o.created_at)}</td>
-                          <td className="px-6 py-4">
-                            {o.status === 'pending' && (
-                              <button
-                                onClick={() => handleMarkOrderComplete(o.id)}
-                                className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-lg transition-colors"
-                              >
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Complete
-                              </button>
-                            )}
-                            {o.status === 'completed' && (
-                              <span className="text-xs text-gray-400 flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Done</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {filteredOrders.length === 0 && <p className="text-center py-12 text-gray-400">No orders found.</p>}
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="font-bold text-[#0A2540]">All Orders ({ordersTotal})</h2>
+                  <button onClick={() => loadOrders()} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8] transition-colors">
+                    <RefreshCw className="h-4 w-4" /> Refresh
+                  </button>
                 </div>
-              )}
-            </div>
+                {loadingOrders ? (
+                  <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#00A8E8]" /></div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                          <th className="px-6 py-4">Order</th><th className="px-6 py-4">Customer</th>
+                          <th className="px-6 py-4">Items</th><th className="px-6 py-4">Total</th>
+                          <th className="px-6 py-4">Status</th><th className="px-6 py-4">Date</th><th className="px-6 py-4">Action</th>
+                        </tr></thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {orders.map(o => (
+                            <tr key={o.id} className="hover:bg-gray-50/50">
+                              <td className="px-6 py-4 font-bold text-sm text-[#0A2540]">#{o.id}</td>
+                              <td className="px-6 py-4 text-sm"><p className="font-semibold">{o.customer_name}</p><p className="text-gray-400 text-xs">{o.customer_email}</p><p className="text-gray-400 text-xs">{o.shipping_address}</p></td>
+                              <td className="px-6 py-4 text-sm text-gray-600">{o.items.length} item{o.items.length !== 1 ? 's' : ''}</td>
+                              <td className="px-6 py-4 font-bold text-sm">${o.total_amount.toFixed(2)}</td>
+                              <td className="px-6 py-4"><StatusBadge status={o.status} /></td>
+                              <td className="px-6 py-4 text-sm text-gray-500">{fmt(o.created_at)}</td>
+                              <td className="px-6 py-4">
+                                {o.status === 'pending' && (
+                                  <button
+                                    onClick={() => handleMarkOrderComplete(o.id)}
+                                    className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-lg transition-colors"
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> Complete
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {orders.length === 0 && <p className="text-center py-12 text-gray-400">No orders found.</p>}
+                    </div>
+                    <div className="border-t border-gray-100">
+                      <Pagination 
+                        currentPage={ordersPage} 
+                        totalItems={ordersTotal} 
+                        itemsPerPage={10} 
+                        onPageChange={setOrdersPage} 
+                      />
+                    </div>
+                  </>
+                )}
           )}
 
           {/* ── INVENTORY ── */}
@@ -541,56 +680,66 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="font-bold text-[#0A2540]">
-                    {brandFilter ? `${brandFilter} Products` : 'All Products'} ({filteredProducts.length})
+                    {brandFilter ? `${brandFilter} Products` : 'All Products'} ({productsTotal})
                   </h2>
-                  <button onClick={loadProducts} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8]">
+                  <button onClick={() => loadProducts()} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8]">
                     <RefreshCw className="h-4 w-4" /> Refresh
                   </button>
                 </div>
                 {loadingProducts ? (
                   <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#00A8E8]" /></div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                        <th className="px-6 py-4">Product</th><th className="px-6 py-4">Brand</th>
-                        <th className="px-6 py-4">Category</th><th className="px-6 py-4">OEM</th>
-                        <th className="px-6 py-4">Price</th><th className="px-6 py-4">Stock</th><th className="px-6 py-4"></th>
-                      </tr></thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {filteredProducts.map(p => (
-                          <tr key={p.id} className="hover:bg-gray-50/50">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={p.image_url ?? `https://placehold.co/60x60/0A2540/FFFFFF?text=${encodeURIComponent(p.name.slice(0, 2))}`}
-                                  alt={p.name}
-                                  className="h-10 w-10 rounded-lg object-cover border bg-gray-50 flex-shrink-0"
-                                />
-                                <span className="font-semibold text-sm text-gray-700 max-w-[160px] truncate">{p.name}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4"><span className="px-2 py-1 bg-[#00A8E8]/5 text-[#00A8E8] rounded text-xs font-bold">{p.brand}</span></td>
-                            <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
-                            <td className="px-6 py-4 text-sm font-mono text-gray-500">{p.oem_number}</td>
-                            <td className="px-6 py-4 font-bold text-sm text-[#0A2540]">${p.price.toFixed(2)}</td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <div className={`h-2 w-2 rounded-full ${p.stock > 10 ? 'bg-green-500' : p.stock > 0 ? 'bg-yellow-500' : 'bg-red-500'}`} />
-                                <span className="text-sm font-medium text-gray-600">{p.stock}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <button onClick={() => handleDeleteProduct(p.id)} className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition-colors">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {filteredProducts.length === 0 && <p className="text-center py-12 text-gray-400">No products found.</p>}
-                  </div>
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                          <th className="px-6 py-4">Product</th><th className="px-6 py-4">Brand</th>
+                          <th className="px-6 py-4">Category</th><th className="px-6 py-4">OEM</th>
+                          <th className="px-6 py-4">Price</th><th className="px-6 py-4">Stock</th><th className="px-6 py-4"></th>
+                        </tr></thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {products.map(p => (
+                            <tr key={p.id} className="hover:bg-gray-50/50">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={p.image_url ?? `https://placehold.co/60x60/0A2540/FFFFFF?text=${encodeURIComponent(p.name.slice(0, 2))}`}
+                                    alt={p.name}
+                                    className="h-10 w-10 rounded-lg object-cover border bg-gray-50 flex-shrink-0"
+                                  />
+                                  <span className="font-semibold text-sm text-gray-700 max-w-[160px] truncate">{p.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4"><span className="px-2 py-1 bg-[#00A8E8]/5 text-[#00A8E8] rounded text-xs font-bold">{p.brand}</span></td>
+                              <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
+                              <td className="px-6 py-4 text-sm font-mono text-gray-500">{p.oem_number}</td>
+                              <td className="px-6 py-4 font-bold text-sm text-[#0A2540]">${p.price.toFixed(2)}</td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-2 w-2 rounded-full ${p.stock > 10 ? 'bg-green-500' : p.stock > 0 ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                                  <span className="text-sm font-medium text-gray-600">{p.stock}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <button onClick={() => handleDeleteProduct(p.id)} className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {products.length === 0 && <p className="text-center py-12 text-gray-400">No products found.</p>}
+                    </div>
+                    <div className="border-t border-gray-100">
+                      <Pagination 
+                        currentPage={productsPage} 
+                        totalItems={productsTotal} 
+                        itemsPerPage={10} 
+                        onPageChange={setProductsPage} 
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             </>
@@ -600,8 +749,8 @@ export default function AdminDashboard() {
           {activeTab === 'enquiries' && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <h2 className="font-bold text-[#0A2540]">Customer Enquiries ({enquiries.length})</h2>
-                <button onClick={loadEnquiries} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8]">
+                <h2 className="font-bold text-[#0A2540]">Customer Enquiries ({enquiriesTotal})</h2>
+                <button onClick={() => loadEnquiries()} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#00A8E8]">
                   <RefreshCw className="h-4 w-4" /> Refresh
                 </button>
               </div>
@@ -617,33 +766,43 @@ export default function AdminDashboard() {
               {loadingEnquiries ? (
                 <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#00A8E8]" /></div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                      <th className="px-6 py-4">Customer</th><th className="px-6 py-4">Subject</th>
-                      <th className="px-6 py-4">Status</th><th className="px-6 py-4">Date</th><th className="px-6 py-4">Action</th>
-                    </tr></thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredEnquiries.map(e => (
-                        <tr key={e.id} className="hover:bg-gray-50/50">
-                          <td className="px-6 py-4 text-sm"><p className="font-semibold">{e.customer_name}</p><p className="text-gray-400 text-xs">{e.customer_email}</p></td>
-                          <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">{e.subject}</td>
-                          <td className="px-6 py-4"><StatusBadge status={e.status} /></td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{fmt(e.created_at)}</td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => setSelectedEnquiry(e)}
-                              className="text-xs font-bold text-[#00A8E8] bg-[#f0f9fc] hover:bg-[#e0f4fb] px-3 py-2 rounded-lg transition-colors"
-                            >
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {filteredEnquiries.length === 0 && <p className="text-center py-12 text-gray-400">No enquiries found.</p>}
-                </div>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead><tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                        <th className="px-6 py-4">Customer</th><th className="px-6 py-4">Subject</th>
+                        <th className="px-6 py-4">Status</th><th className="px-6 py-4">Date</th><th className="px-6 py-4">Action</th>
+                      </tr></thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {enquiries.map(e => (
+                          <tr key={e.id} className="hover:bg-gray-50/50">
+                            <td className="px-6 py-4 text-sm"><p className="font-semibold">{e.customer_name}</p><p className="text-gray-400 text-xs">{e.customer_email}</p></td>
+                            <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">{e.subject}</td>
+                            <td className="px-6 py-4"><StatusBadge status={e.status} /></td>
+                            <td className="px-6 py-4 text-sm text-gray-500">{fmt(e.created_at)}</td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => setSelectedEnquiry(e)}
+                                className="text-xs font-bold text-[#00A8E8] bg-[#f0f9fc] hover:bg-[#e0f4fb] px-3 py-2 rounded-lg transition-colors"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {enquiries.length === 0 && <p className="text-center py-12 text-gray-400">No enquiries found.</p>}
+                  </div>
+                  <div className="border-t border-gray-100">
+                    <Pagination 
+                      currentPage={enquiriesPage} 
+                      totalItems={enquiriesTotal} 
+                      itemsPerPage={10} 
+                      onPageChange={setEnquiriesPage} 
+                    />
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -663,6 +822,16 @@ export default function AdminDashboard() {
           enquiry={selectedEnquiry}
           onClose={() => setSelectedEnquiry(null)}
           onUpdated={() => { loadEnquiries(); setSelectedEnquiry(null); }}
+        />
+      )}
+      {confirmData.isOpen && (
+        <ConfirmModal
+          isOpen={confirmData.isOpen}
+          title={confirmData.title}
+          message={confirmData.message}
+          onConfirm={confirmData.onConfirm}
+          onCancel={() => setConfirmData(prev => ({ ...prev, isOpen: false }))}
+          isDestructive={confirmData.isDestructive}
         />
       )}
     </div>

@@ -9,8 +9,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.products.list()
-      .then((data) => setFeaturedProducts(data.slice(0, 4).map(toUiProduct)))
+    api.products.list({ limit: 4 })
+      .then((data) => setFeaturedProducts(data.items.map(toUiProduct)))
       .catch((e) => console.error('Failed to load products:', e))
       .finally(() => setLoading(false));
   }, []);

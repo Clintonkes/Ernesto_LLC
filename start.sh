@@ -1,9 +1,3 @@
 #!/bin/bash
-
-# Start FastAPI in background using our smart port script
-echo "Starting FastAPI Backend..."
-python run.py &
-
-# Start Next.js Frontend
-echo "Starting Next.js Frontend..."
-npm run start
+echo "Starting RA Ernesto..."
+uvicorn api.main:app --host 0.0.0.0 --port "${PORT:-8000}"

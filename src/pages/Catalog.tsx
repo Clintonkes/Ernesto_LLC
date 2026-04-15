@@ -1,31 +1,50 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ShoppingCart, Filter, Loader2 } from 'lucide-react';
-import { api, toUiProduct } from '../lib/api';
+import { Filter, Search, ChevronRight, LayoutGrid, List as ListIcon, Loader2, ShoppingCart } from 'lucide-react';
+import { api, toUiProduct, ApiProduct } from '../lib/api';
+import Pagination from '../components/ui/Pagination';
 import { categories } from '../lib/data/brands';
 import { brands } from '../lib/mockData';
 
 export default function Catalog() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const brandFilter = searchParams.get('brand');
   const categoryFilter = searchParams.get('category');
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [products, setProducts] = useState<ReturnType<typeof toUiProduct>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [totalItems, setTotalItems] = useState(0);
+
+  const itemsPerPage = 10;
 
   useEffect(() => {
     setLoading(true);
     setError('');
-    const params: Record<string, string> = {};
+    
+    const params: any = {
+      skip: (pageParam - 1) * itemsPerPage,
+      limit: itemsPerPage
+    };
     if (brandFilter) params.brand = brandFilter;
     if (categoryFilter) params.category = categoryFilter;
 
     api.products.list(params)
-      .then((data) => setProducts(data.map(toUiProduct)))
+      .then((res) => {
+        setProducts(res.items.map(toUiProduct));
+        setTotalItems(res.total);
+      })
       .catch((e) => setError(e.message ?? 'Failed to load products'))
       .finally(() => setLoading(false));
-  }, [brandFilter, categoryFilter]);
+  }, [brandFilter, categoryFilter, pageParam]);
+
+  const handlePageChange = (newPage: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('page', String(newPage));
+    setSearchParams(nextParams);
+    window.scrollTo(0, 0);
+  };
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen py-10">
@@ -139,6 +158,15 @@ export default function Catalog() {
                 ))}
               </div>
             )}
+            {/* Pagination */}
+            <div className="mt-8 bg-white border border-gray-100 rounded-xl shadow-sm">
+              <Pagination 
+                currentPage={pageParam} 
+                totalItems={totalItems} 
+                itemsPerPage={10} 
+                onPageChange={handlePageChange} 
+              />
+            </div>
           </div>
         </div>
       </div>

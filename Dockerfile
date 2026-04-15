@@ -8,36 +8,20 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-# Install system dependencies for psycopg2
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install node for runtime (Next.js)
-RUN apt-get update && apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs
-
-# Copy build artifacts and source
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Copy Vite build output and Python source
+COPY --from=builder /app/dist ./dist
 COPY . .
 
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=8000
 
-# Start script
-COPY start.sh .
-RUN chmod +x start.sh
+EXPOSE 8000
 
-EXPOSE 3000 8000
-
-CMD ["./start.sh"]
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
