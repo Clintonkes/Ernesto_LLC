@@ -1,0 +1,101 @@
+import { Brand } from '@/types';
+
+export const brands: Brand[] = [
+  {
+    id: '1',
+    name: 'Toyota',
+    slug: 'toyota',
+    logo: 'https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=200&h=200&fit=crop',
+    description: 'Leading Japanese automotive manufacturer known for reliability and innovation.',
+  },
+  {
+    id: '2',
+    name: 'BMW',
+    slug: 'bmw',
+    logo: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=200&h=200&fit=crop',
+    description: 'German premium vehicle manufacturer renowned for performance and luxury.',
+  },
+  {
+    id: '3',
+    name: 'Ford',
+    slug: 'ford',
+    logo: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=200&h=200&fit=crop',
+    description: 'American icon known for trucks, muscle cars, and innovative engineering.',
+  },
+  {
+    id: '4',
+    name: 'Mercedes-Benz',
+    slug: 'mercedes-benz',
+    logo: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=200&h=200&fit=crop',
+    description: 'German luxury vehicle brand setting standards in automotive excellence.',
+  },
+  {
+    id: '5',
+    name: 'Honda',
+    slug: 'honda',
+    logo: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bf6?w=200&h=200&fit=crop',
+    description: 'Japanese manufacturer famous for reliable engines and fuel efficiency.',
+  },
+  {
+    id: '6',
+    name: 'Chevrolet',
+    slug: 'chevrolet',
+    logo: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=200&h=200&fit=crop',
+    description: 'American brand offering diverse vehicles from sports cars to trucks.',
+  },
+  {
+    id: '7',
+    name: 'Nissan',
+    slug: 'nissan',
+    logo: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=200&h=200&fit=crop',
+    description: 'Japanese automaker known for innovative technology and performance.',
+  },
+  {
+    id: '8',
+    name: 'Volkswagen',
+    slug: 'volkswagen',
+    logo: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=200&h=200&fit=crop',
+    description: 'German mass-market manufacturer known for quality and engineering.',
+  },
+  {
+    id: '9',
+    name: 'Hyundai',
+    slug: 'hyundai',
+    logo: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=200&h=200&fit=crop',
+    description: 'South Korean brand offering value and reliability.',
+  },
+  {
+    id: '10',
+    name: 'Kia',
+    slug: 'kia',
+    logo: 'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=200&h=200&fit=crop',
+    description: 'South Korean manufacturer known for stylish and affordable vehicles.',
+  },
+  {
+    id: '11',
+    name: 'Audi',
+    slug: 'audi',
+    logo: 'https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=200&h=200&fit=crop',
+    description: 'German luxury brand known for advanced technology and quattro AWD.',
+  },
+  {
+    id: '12',
+    name: 'Subaru',
+    slug: 'subaru',
+    logo: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=200&h=200&fit=crop',
+    description: "Japanese brand renowned for Symmetrical AWD and boxer's engines.",
+  },
+];
+
+export const categories = [
+  'Engine Parts',
+  'Brakes',
+  'Suspension',
+  'Electrical',
+  'Transmission',
+  'Filters',
+  'Exhaust',
+  'Cooling',
+  'Steering',
+  'Body Parts',
+];
