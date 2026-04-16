@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Phone, Mail } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 
 const NAV_LINKS = [
@@ -22,8 +22,14 @@ export default function Navbar() {
       <div className="bg-[#0A2540] text-white py-2 text-xs md:text-sm">
         <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl">
           <div className="flex gap-4">
-            <span>?? +1 (860) 543-0799</span>
-            <span className="hidden sm:inline">?? laurafanelli@mac.com</span>
+            <span className="inline-flex items-center gap-1">
+              <Phone className="h-3.5 w-3.5" />
+              +1 (860) 543-0799
+            </span>
+            <span className="hidden sm:inline-flex items-center gap-1">
+              <Mail className="h-3.5 w-3.5" />
+              laurafanelli@mac.com
+            </span>
           </div>
           <div>1703 Prince ST, Beaufort, SC 29902</div>
         </div>
