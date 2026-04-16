@@ -1,9 +1,10 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from .. import crud, schemas, database
 from .. import email_service
+from ..sse_manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,16 @@ router = APIRouter(
 
 @router.post("", response_model=schemas.Order, status_code=201, include_in_schema=False)
 @router.post("/", response_model=schemas.Order, status_code=201)
-def create_order(order: schemas.OrderCreate, db: Session = Depends(database.get_db)):
+async def create_order(
+    order: schemas.OrderCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db),
+):
     try:
         db_order = crud.create_order(db, order)
-        email_service.send_order_confirmation(db_order)
-        email_service.send_admin_new_order_notification(db_order)
+        await manager.broadcast("NEW_ORDER")
+        background_tasks.add_task(email_service.send_order_confirmation, db_order)
+        background_tasks.add_task(email_service.send_admin_new_order_notification, db_order)
         return db_order
     except Exception as e:
         logger.error(f"Error creating order: {e}")

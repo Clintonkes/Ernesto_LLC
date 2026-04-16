@@ -1,9 +1,10 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from .. import crud, database, schemas
 from .. import email_service
+from ..sse_manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,16 @@ router = APIRouter(
 
 @router.post("", response_model=schemas.Enquiry, status_code=201, include_in_schema=False)
 @router.post("/", response_model=schemas.Enquiry, status_code=201)
-def create_enquiry(enquiry: schemas.EnquiryCreate, db: Session = Depends(database.get_db)):
+async def create_enquiry(
+    enquiry: schemas.EnquiryCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db),
+):
     try:
         db_enquiry = crud.create_enquiry(db, enquiry)
-        email_service.send_enquiry_acknowledgement(db_enquiry)
-        email_service.send_admin_enquiry_notification(db_enquiry)
+        await manager.broadcast("NEW_ENQUIRY")
+        background_tasks.add_task(email_service.send_enquiry_acknowledgement, db_enquiry)
+        background_tasks.add_task(email_service.send_admin_enquiry_notification, db_enquiry)
         return db_enquiry
     except Exception as e:
         logger.error(f"Error creating enquiry: {e}")

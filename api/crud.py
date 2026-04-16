@@ -2,11 +2,6 @@ import logging
 from sqlalchemy.orm import Session
 from . import models, schemas
 
-from .sse_manager import manager
-import asyncio
-
-from .sse_manager import manager
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +33,6 @@ def create_order(db: Session, order: schemas.OrderCreate):
         db.commit()
         db.refresh(db_order)
         logger.info(f"Order #{db_order.id} created for {order.customer_email}")
-        
-        # Broadcast event for real-time update
-        asyncio.create_task(manager.broadcast("NEW_ORDER"))
         
         return db_order
     except Exception as e:
@@ -152,9 +144,6 @@ def create_enquiry(db: Session, enquiry: schemas.EnquiryCreate):
     db.commit()
     db.refresh(db_enquiry)
     logger.info(f"Enquiry #{db_enquiry.id} created from {enquiry.customer_email}")
-    
-    # Broadcast event for real-time update
-    asyncio.create_task(manager.broadcast("NEW_ENQUIRY"))
     
     return db_enquiry
 
