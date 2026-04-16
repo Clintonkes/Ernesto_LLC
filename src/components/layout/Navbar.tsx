@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X, Phone, Mail } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 
 const NAV_LINKS = [
@@ -19,23 +19,21 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
-      {/* Top Bar */}
       <div className="bg-[#0A2540] text-white py-2 text-xs md:text-sm">
-        <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl gap-3">
-          <div className="flex gap-4 min-w-0">
-            <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> +1 (860) 543-0799</span>
-            <span className="hidden sm:inline-flex items-center gap-1 truncate"><Mail className="h-3.5 w-3.5" /> laurafanelli@mac.com</span>
+        <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl">
+          <div className="flex gap-4">
+            <span>?? +1 (860) 543-0799</span>
+            <span className="hidden sm:inline">?? laurafanelli@mac.com</span>
           </div>
-          <div className="truncate">1703 Prince ST, Beaufort, SC 29902</div>
+          <div>1703 Prince ST, Beaufort, SC 29902</div>
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl relative">
         <div className="flex items-center gap-6">
           <button
-            className="md:hidden text-[#1A1A1A]"
             type="button"
+            className="md:hidden text-[#1A1A1A]"
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMobileMenuOpen}
             onClick={() => setIsMobileMenuOpen((open) => !open)}
@@ -49,7 +47,6 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#1A1A1A]">
           {NAV_LINKS.map((link) => (
             <Link key={link.to} to={link.to} className="hover:text-[#00A8E8] transition-colors">
@@ -58,7 +55,6 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Actions */}
         <div className="flex items-center gap-4">
           <div className="hidden md:flex relative w-64 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-[#00A8E8]" />
@@ -78,31 +74,24 @@ export default function Navbar() {
             )}
           </Link>
         </div>
-      </div>
 
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white shadow-lg">
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-1 max-w-7xl">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={closeMobileMenu}
-                className="rounded-xl px-4 py-3 text-sm font-semibold text-[#0A2540] hover:bg-[#f0f9fc] hover:text-[#00A8E8] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              to="/cart"
-              onClick={closeMobileMenu}
-              className="rounded-xl px-4 py-3 text-sm font-semibold text-[#0A2540] hover:bg-[#f0f9fc] hover:text-[#00A8E8] transition-colors"
-            >
-              Cart ({cartItemCount})
-            </Link>
-          </nav>
-        </div>
-      )}
+        {isMobileMenuOpen && (
+          <div className="absolute left-4 right-4 top-full mt-3 md:hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+            <nav className="flex flex-col p-3 text-sm font-medium text-[#1A1A1A]">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobileMenu}
+                  className="rounded-xl px-4 py-3 hover:bg-[#F8F9FA] hover:text-[#00A8E8] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
