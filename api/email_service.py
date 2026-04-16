@@ -14,7 +14,7 @@ import resend
 logger = logging.getLogger(__name__)
 
 FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "RA Ernesto LLC <noreply@raernestoglobal.com>")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "raernesto1110@gmail.com")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "laurafanelli@mac.com")
 
 
 def _client_ready() -> bool:
@@ -154,7 +154,7 @@ def send_order_completed_notification(order) -> None:
         <h3 style="color:#0A2540;">Order #{order.id} Details</h3>
         {_items_html(order.items)}
         <p style="margin-top:24px;color:#555;"><strong>Shipped to:</strong> {order.shipping_address}</p>
-        <p style="color:#555;">For any queries contact us at raernesto1110@gmail.com or +1 (860) 543-0799.</p>
+        <p style="color:#555;">For any queries contact us at laurafanelli@mac.com or +1 (860) 543-0799.</p>
         """
         resend.Emails.send({
             "from": FROM_EMAIL,

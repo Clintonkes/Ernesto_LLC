@@ -29,7 +29,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <span className="text-[#00A8E8] mr-2">✉️</span> 
-                raernesto1110@gmail.com
+                laurafanelli@mac.com
               </li>
             </ul>
           </div>

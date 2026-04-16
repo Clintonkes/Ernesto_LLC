@@ -82,7 +82,7 @@ export default function CustomerService() {
                   </div>
                   <div>
                     <p className="font-semibold text-[#1A1A1A] text-sm">Email</p>
-                    <p className="text-[#555555] text-sm">raernesto1110@gmail.com</p>
+                    <p className="text-[#555555] text-sm">laurafanelli@mac.com</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
